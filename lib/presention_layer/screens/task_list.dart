@@ -1,16 +1,15 @@
 import 'package:crud/business_logic_layer/cubit/cubit/tasks_cubit.dart';
+import 'package:crud/presention_layer/screens/add_task.dart';
 import 'package:crud/presention_layer/screens/edit_task.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import '../../data_layer/model/tasks_data.dart';
-import 'add_task.dart';
 
 class TaskList extends StatefulWidget {
-  // final String token;
+  final String token;
   const TaskList({
     super.key,
-    // required this.token,
+    required this.token,
   });
 
   @override
@@ -23,7 +22,7 @@ class _TaskListState extends State<TaskList> {
   @override
   void initState() {
     super.initState();
-    BlocProvider.of<TasksCubit>(context).getAllTasks();
+    BlocProvider.of<TasksCubit>(context).getTasks("Bearer ${widget.token}");
     print(allTasks);
   }
 
@@ -70,9 +69,11 @@ class _TaskListState extends State<TaskList> {
             color: Colors.white,
           ),
           child: ListView.builder(
+            shrinkWrap: true,
+            padding: const EdgeInsets.all(8),
             itemCount: allTasks.length,
             itemBuilder: (context, index) {
-              if (allTasks.isEmpty) {
+              if (allTasks.isNotEmpty) {
                 return InkWell(
                   onTap: () {},
                   child: Card(
@@ -97,13 +98,15 @@ class _TaskListState extends State<TaskList> {
                         //   color: Color.fromRGBO(32, 173, 90, 100),
                         //   size: 55,
                         // ),
-                        title: Text('.....'),
-                        subtitle: Text('Description ...'),
+                        title: Text(allTasks[index].title.toString()),
+                        subtitle: Text(allTasks[index].description.toString()),
                         trailing: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             IconButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                // delete task
+                              },
                               icon: Icon(
                                 Icons.delete,
                                 size: 24,
@@ -174,12 +177,36 @@ class _TaskListState extends State<TaskList> {
           Color.fromRGBO(105, 132, 116, 100),
         )),
         onPressed: () {
+          final cubit = context.read<TasksCubit>();
+
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => const AddTask(),
+              builder: (context) => BlocProvider.value(
+                value: cubit,
+                child: AddTask(
+                  token: "Bearer ${widget.token}",
+                ),
+              ),
             ),
           );
+
+          // Navigator.push(
+          //   context,
+          //   MaterialPageRoute(
+          //     builder: (context) => BlocProvider(
+          //       create: (context) => getIt<TasksCubit>(),
+          //       child: AddTask(token: "Bearer ${widget.token}"),
+          //     ),
+          //   ),
+          // );
+
+          // Navigator.push(
+          //   context,
+          //   MaterialPageRoute(
+          //     builder: (context) => AddTask(token: "Bearer ${widget.token}"),
+          //   ),
+          // );
         },
         icon: Icon(
           Icons.add_circle_outlined,

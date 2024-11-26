@@ -1,5 +1,9 @@
 import 'dart:convert';
+import 'package:crud/business_logic_layer/cubit/cubit/tasks_cubit.dart';
+import 'package:crud/di.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../const.dart';
 import '../widget/button.dart';
 import '../widget/formFild.dart';
@@ -16,6 +20,28 @@ class SignIn extends StatefulWidget {
 class _SignInState extends State<SignIn> {
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
+
+  Future<void> storeToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('userToken', token);
+  }
+
+  Future<String?> getToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('userToken');
+  }
+
+/* لما اجي اعمل تسجيل خروج  */
+  // Future<void> logout() async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   await prefs.remove('user_token'); // مسح التوكين عند الخروج
+  //   Navigator.pushReplacement(
+  //     context,
+  //     MaterialPageRoute(builder: (context) => LoginPage()),
+  //   );
+  // }
+
+  String? token;
 
   @override
   Widget build(BuildContext context) {
@@ -168,34 +194,56 @@ class _SignInState extends State<SignIn> {
           content: Text('incorrect data, Please enter correct data'),
         ),
       );
-    } else {
-      final String url =
-          'http://192.168.1.10/karimTestAPI/public/api/Make/Login';
-      final response = await http.post(Uri.parse(url), body: {
-        'email': emailController.text,
-        'password': passwordController.text,
-      });
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        // ignore: unused_local_variable
-         tokeen = data['token'];
-        // context.read()<TasksCubit>().setToken(token);
-        if (data['mes'] == 'incorrect') {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${data['errors']['email'][0]}'),
-            ),
-          );
+    } else
+      try {
+        final String url = '${baseUri}login';
+        final response = await http.post(
+          Uri.parse(url),
+          body: {
+            'email': emailController.text,
+            'password': passwordController.text,
+          },
+        );
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          token = data['token'];
+          if (data['mes'] == 'incorrect') {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('${data['errors']['email'][0]}'),
+              ),
+            );
+          } else {
+            SharedPreferences prefs = await SharedPreferences.getInstance();
+            prefs.setString('token', "Bearer ${token}");
+
+            // final cubit = context.read<TasksCubit>();
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => BlocProvider(
+                  create: (context) => getIt<TasksCubit>(),
+                  child: TaskList(token: "Bearer ${token}"),
+                ),
+              ),
+            );
+
+            // BlocProvider.value(
+            //     value: cubit,
+            //     child: TaskList(
+            //       token: "Bearer ${token}",
+            //     ),
+            //   ),
+
+            print('one tkoen ${token}');
+          }
+          print('thissssss ${data}');
         } else {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => TaskList()),
-          );
+          print('error: ${response.statusCode}');
+          print('response body: ${response.body}');
         }
-        print('thissssss ${data}');
-      } else {
-        print('error');
+      } catch (e) {
+        print('Exception: $e');
       }
-    }
   }
 }

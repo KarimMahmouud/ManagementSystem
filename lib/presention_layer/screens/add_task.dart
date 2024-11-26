@@ -1,10 +1,17 @@
+import 'package:crud/business_logic_layer/cubit/cubit/tasks_cubit.dart';
+import 'package:crud/data_layer/model/tasks_data.dart';
 import 'package:flutter/material.dart';
-
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import '../widget/button.dart';
 import '../widget/formfild.dart';
 
 class AddTask extends StatefulWidget {
-  const AddTask({super.key});
+  final String token;
+  AddTask({
+    super.key,
+    required this.token,
+  });
 
   @override
   State<AddTask> createState() => _AddTaskState();
@@ -13,17 +20,17 @@ class AddTask extends StatefulWidget {
 class _AddTaskState extends State<AddTask> {
   String startTime = '00:00';
   String endTime = '00:00';
-  String selctedDep = 'Karim';
+  String? selctedDep;
   String assign = 'To';
-  final List depList = [
-    'Eng',
-    'Doc',
-    'Karim',
+  List<Map<String, dynamic>> depList = [
+    {'id': 1, 'name': 'Hr'},
+    {'id': 2, 'name': 'It'},
+    {'id': 3, 'name': 'Sales'},
   ];
-  final List assignList = [
-    'Karin',
-    'Youhana',
-    'Basant',
+  List<Map<String, dynamic>> assignList = [
+    {'id': 1, 'name': 'karim'},
+    {'id': 2, 'name': 'adly'},
+    {'id': 3, 'name': 'youhana'},
   ];
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descController = TextEditingController();
@@ -32,21 +39,61 @@ class _AddTaskState extends State<AddTask> {
   @override
   Widget build(BuildContext context) {
     getTimeFromUser({required bool isStartTime}) async {
+      // عرض نافذة اختيار الوقت
       TimeOfDay? pickedTime = await showTimePicker(
-          context: context,
-          initialTime: TimeOfDay.fromDateTime(DateTime.now()));
+        context: context,
+        initialTime: TimeOfDay.fromDateTime(DateTime.now()),
+      );
 
-      // ignore: use_build_context_synchronously
-      String formattedTime = pickedTime!.format(context);
+      if (pickedTime != null) {
+        // تحويل TimeOfDay إلى DateTime
+        final DateTime now = DateTime.now();
+        final DateTime dateTime = DateTime(
+          now.year,
+          now.month,
+          now.day,
+          pickedTime.hour,
+          pickedTime.minute,
+        );
 
-      if (!isStartTime) {
-        setState(() => startTime = formattedTime);
-      } else if (isStartTime) {
-        setState(() => endTime = formattedTime);
+        // تنسيق الوقت باستخدام DateFormat
+        String formattedTime =
+            DateFormat('yyyy-MM-dd HH:mm:ss').format(dateTime);
+
+        // تخزين الوقت في المتغير المناسب
+        if (isStartTime) {
+          setState(() {
+            startTime = formattedTime;
+          });
+        } else {
+          setState(() {
+            endTime = formattedTime;
+          });
+        }
       } else {
-        debugPrint('time cancled or someting is wrong');
+        // في حال تم إلغاء اختيار الوقت
+        debugPrint('Time picker canceled or something went wrong');
       }
     }
+
+    // getTimeFromUser({required bool isStartTime}) async {
+    //   dynamic pickedTime = await showTimePicker(
+    //       context: context,
+    //       initialTime: TimeOfDay.fromDateTime(DateTime.now()));
+
+    //   dynamic formattedTime =
+    //       DateFormat('yyyy-MM-dd HH:mm:ss').format(pickedTime!).toString();
+
+    //    String formattedTime = pickedTime!.format(context);
+
+    //   if (!isStartTime) {
+    //     setState(() => startTime = formattedTime);
+    //   } else if (isStartTime) {
+    //     setState(() => endTime = formattedTime);
+    //   } else {
+    //     debugPrint('time cancled or someting is wrong');
+    //   }
+    // }
 
     return Scaffold(
       body: Stack(
@@ -103,7 +150,7 @@ class _AddTaskState extends State<AddTask> {
                     padding: EdgeInsets.only(top: 8, right: 35, left: 35),
                     child: FormFild(
                       text: 'Department',
-                      hint: '$selctedDep ',
+                      hint: selctedDep ?? 'dep',
                       controller: depController,
                       widget: Row(
                         children: [
@@ -123,17 +170,15 @@ class _AddTaskState extends State<AddTask> {
                               color: Colors.black,
                             ),
                             items: depList
-                                .map<DropdownMenuItem<String>>(
-                                  (value) => DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Text(
-                                      "$value",
-                                    ),
+                                .map<DropdownMenuItem<dynamic>>(
+                                  (value) => DropdownMenuItem<dynamic>(
+                                    value: value['id'],
+                                    child: Text(value['name']),
                                   ),
                                 )
                                 .toList(),
-                            onChanged: (String? value) {
-                              setState(() => selctedDep = value!);
+                            onChanged: (dynamic value) {
+                              setState(() => selctedDep = value.toString());
                             },
                           ),
                           const SizedBox(width: 5),
@@ -166,18 +211,15 @@ class _AddTaskState extends State<AddTask> {
                               color: Colors.black,
                             ),
                             items: assignList
-                                .map<DropdownMenuItem<String>>(
-                                  (value) => DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Text(
-                                      "$value",
-                                    ),
-                                  ),
-                                )
-                                .toList(),
-                            onChanged: (String? value) {
+                                .map<DropdownMenuItem<dynamic>>((index) {
+                              return DropdownMenuItem<dynamic>(
+                                value: index['id'], // القيمة هي المعرف
+                                child: Text(index['name']), // العرض هو الاسم
+                              );
+                            }).toList(),
+                            onChanged: (dynamic value) {
                               setState(() {
-                                setState(() => assign = value!);
+                                setState(() => assign = value.toString());
                               });
                             },
                           ),
@@ -197,7 +239,7 @@ class _AddTaskState extends State<AddTask> {
                             hint: startTime,
                             widget: IconButton(
                               onPressed: () {
-                                getTimeFromUser(isStartTime: false);
+                                getTimeFromUser(isStartTime: true);
                               },
                               icon: const Icon(
                                 Icons.access_time,
@@ -213,7 +255,7 @@ class _AddTaskState extends State<AddTask> {
                             hint: endTime,
                             widget: IconButton(
                               onPressed: () {
-                                getTimeFromUser(isStartTime: true);
+                                getTimeFromUser(isStartTime: false);
                               },
                               icon: const Icon(
                                 Icons.access_time,
@@ -228,7 +270,32 @@ class _AddTaskState extends State<AddTask> {
                   Container(
                     width: 300,
                     child: Button(
-                      onTap: () {},
+                      onTap: () {
+                        BlocProvider.of<TasksCubit>(context).creatTasks(
+                          Tasks(
+                            assign_department: selctedDep,
+                            title: titleController.text,
+                            description: descController.text,
+                            assign_user: assign,
+                            start_time: startTime,
+                            end_time: endTime,
+                            assign_from: '1',
+                            attachment: 'newTask',
+                          ),
+                          "Bearer ${widget.token}",
+                        );
+                        Navigator.pop(context);
+
+                        // Navigator.pushReplacement(
+                        //   context,
+                        //   MaterialPageRoute(
+                        //     builder: (context) => BlocProvider(
+                        //       create: (context) => getIt<TasksCubit>(),
+                        //       child: TaskList(token: "Bearer ${widget.token}"),
+                        //     ),
+                        //   ),
+                        // );
+                      },
                       text: 'Save',
                     ),
                   ),

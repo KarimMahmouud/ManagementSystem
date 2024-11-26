@@ -1,21 +1,33 @@
-class Tasks {
-  late int id;
-  late String assignFromName;
-  late String assignUserName;
-  late String assignStatusName;
-  late String title;
-  late String description;
-  late String startTime;
-  late String endTime;
+import 'package:json_annotation/json_annotation.dart';
 
-  Tasks.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
-    assignFromName = json['assign_from'];
-    assignUserName = json['assign_user'];
-    assignStatusName = json['assign_status'];
-    title = json['title'];
-    description = json['description'];
-    startTime = json['start_time'];
-    endTime = json['end_time'];
-  }
+part 'tasks_data.g.dart';
+
+@JsonSerializable()
+class Tasks {
+  Tasks({
+    this.id,
+    this.assign_from,
+    this.attachment,
+    this.title,
+    this.description,
+    this.assign_user,
+    this.end_time,
+    this.start_time,
+    this.assign_department,
+    this.assign_status,
+  });
+
+  dynamic id;
+  dynamic assign_from;
+  dynamic assign_user;
+  dynamic attachment;
+  dynamic assign_department;
+  dynamic assign_status;
+  dynamic title;
+  dynamic description;
+  dynamic start_time;
+  dynamic end_time;
+
+  factory Tasks.fromJson(Map<String, dynamic> json) => _$TasksFromJson(json);
+  Map<String, dynamic> toJson() => _$TasksToJson(this);
 }

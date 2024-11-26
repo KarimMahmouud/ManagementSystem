@@ -1,34 +1,19 @@
 import 'package:dio/dio.dart';
+import 'package:retrofit/retrofit.dart';
+import '../model/tasks_data.dart';
 
-import '../../const.dart';
+part 'tasks_srevices.g.dart';
 
-class TasksWebServices {
-  Dio dio = Dio();
+@RestApi(
+    baseUrl:
+        'https://soc-opportunity-system-coaches.trycloudflare.com/karimTestAPI/public/api')
+abstract class TasksWebServices {
+  factory TasksWebServices(Dio dio, {String? baseUrl}) = _TasksWebServices;
 
-  tasksWebSrevices() {
-    BaseOptions options = BaseOptions(
-      baseUrl: baseUri,
-      receiveDataWhenStatusError: true,
-      connectTimeout: const Duration(seconds: 300),
-      receiveTimeout: const Duration(seconds: 300),
-      sendTimeout: const Duration(seconds: 300),
-    );
-    dio = Dio(options);
-    dio.options.headers = {
-        'Authorization': 'Bearer ${tokeen}'
-      };
-  }
+  @GET('/Get/Data')
+  Future<List<Tasks>> getTasks(@Header('Authorization') String token);
 
-  Future<List<dynamic>> getAllTasks() async {
-    try {
-      
-      final Response response = await dio.get('get/data');
-
-      print('error response ${response.data}');
-      return response.data;
-    } catch (e) {
-      print('CHTCH ${e.toString()}');
-      return [];
-    }
-  }
+  @POST('/Add/Task')
+  Future<Tasks> creatNewTask(
+      @Body() Tasks newTask, @Header('Authorization') String token);
 }

@@ -1,54 +1,64 @@
 import 'package:crud/business_logic_layer/cubit/cubit/tasks_cubit.dart';
-import 'package:crud/data_layer/repository/tasks_repository.dart';
-import 'package:crud/data_layer/web_services/tasks_srevices.dart';
+import 'package:crud/di.dart';
+import 'package:crud/presention_layer/screens/sign_in.dart';
+import 'package:crud/presention_layer/screens/task_list.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'app_router.dart';
+import 'business_logic_layer/ob.dart';
 
-// void main() {
-//   runApp(MyApp(
-//     appRouter: AppRouter(),
-//   ));
-// }
-
-// class MyApp extends StatelessWidget {
-//   const MyApp({super.key, required this.appRouter});
-//   final AppRouter appRouter;
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(
-//         debugShowCheckedModeBanner: false,
-//         onGenerateRoute: appRouter.generateRoute,
-//         theme: ThemeData(useMaterial3: true));
-//   }
-// }
-
-void main() {
+late SharedPreferences prefs;
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  iniGetIt();
+  prefs = await SharedPreferences.getInstance();
+  Bloc.observer = myBlocObserver();
   runApp(MyApp());
 }
 
-// ignore: must_be_immutable
 class MyApp extends StatelessWidget {
-  late TasksRepository tasksRepository;
-  late TasksCubit tasksCubit;
-
-  MyApp() {
-    tasksRepository = TasksRepository(TasksWebServices());
-    tasksCubit = TasksCubit(tasksRepository);
-  }
+  MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => tasksCubit,
-      child: MaterialApp(
-        onGenerateRoute: AppRouter().generateRoute,
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      theme: ThemeData(useMaterial3: true),
+      home: BlocProvider(
+        create: (context) => getIt<TasksCubit>(),
+        child: prefs.getString('token') == null
+            ? SignIn()
+            : TaskList(token: prefs.getString('token')!),
       ),
     );
   }
 }
+
+// void main() {
+//   runApp(MyApp());
+// }
+
+// // ignore: must_be_immutable
+// class MyApp extends StatelessWidget {
+//   late TasksRepository tasksRepository;
+//   late TasksCubit tasksCubit;
+
+//   MyApp() {
+//     tasksRepository = TasksRepository(TasksWebServices());
+//     tasksCubit = TasksCubit(tasksRepository);
+//   }
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return BlocProvider(
+//       create: (context) => tasksCubit,
+//       child: MaterialApp(
+//         onGenerateRoute: AppRouter().generateRoute,
+//       ),
+//     );
+//   }
+// }
 
 
 

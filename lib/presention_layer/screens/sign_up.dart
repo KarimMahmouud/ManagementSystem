@@ -1,7 +1,11 @@
 import 'dart:convert';
 
+import 'package:crud/business_logic_layer/cubit/cubit/tasks_cubit.dart';
+import 'package:crud/const.dart';
+import 'package:crud/di.dart';
 import 'package:crud/presention_layer/screens/sign_in.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:http/http.dart' as http;
 import '../widget/button.dart';
 import '../widget/formfild.dart';
@@ -136,8 +140,7 @@ class _SignUpState extends State<SignUp> {
         ),
       );
     } else {
-      final String url =
-          'http://192.168.1.10/karimTestAPI/public/api/Make/Register';
+      final String url = '${baseUri}register';
       final response = await http.post(Uri.parse(url),
           // headers: {'Authorization':'Bearer ${widget.token}'},
           body: {
@@ -157,7 +160,10 @@ class _SignUpState extends State<SignUp> {
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (context) => SignIn(),
+              builder: (context) => BlocProvider(
+                create: (context) => getIt<TasksCubit>(),
+                child: SignIn(),
+              ),
             ),
           );
         }
